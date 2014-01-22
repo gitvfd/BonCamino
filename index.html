@@ -1,0 +1,326 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+<meta charset="utf-8">
+<head>
+	<title>Bon Camino</title>
+	<meta charset="utf-8">
+    <script src="http://d3js.org/d3.v3.js"></script>
+    <script src="fisheye.js"></script>
+	<style>
+		h1,
+		h2,
+		h3,
+		h4,
+		aside {
+		  color: #000;
+		  font-family: "PT Sans", sans-serif;
+		}
+
+		h1 {
+		  font-size: 30px;
+		  font-weight: 300;
+		  letter-spacing: -2px;
+		  margin: .1em 0 .1em 0;
+		}
+
+		h2 {
+		  font-size: 15px;
+		  margin-top: 2em;
+		}
+
+		h1, h2 {
+		  text-rendering: optimizeLegibility;
+		}
+
+		h2 a {
+		  color: #ccc;
+		  left: -20px;
+		  position: absolute;
+		  width: 740px;
+		}
+		body {
+		  background: #fcfcfa;
+		  color: #333;
+		  font-family: "PT Serif", serif;
+		  margin: 1em auto 4em auto;
+		  position: relative;
+		  width: 1400px;
+		}
+
+      .body {
+        font: 10px sans-serif;
+        }
+
+        text {
+  			font: 10px sans-serif;
+  			fill: grey;
+        }
+
+        .axis path, .axis line {
+          fill: none;
+          stroke: grey;
+          shape-rendering: crispEdges;
+        }
+
+        .axis text {stroke: grey; 
+        font: 10px sans-serif;
+        }
+        
+        
+        .grid .tick {
+        	stroke: grey;
+        	opacity: 0.4;
+        }
+
+        .x.axis .tick {
+        	stroke: grey;
+        	opacity: 0.4;
+		  	shape-rendering: crispEdges;
+        }
+
+         .y.axis .tick {
+        	stroke: grey;
+        	opacity: 0.4;
+		  	shape-rendering: crispEdges;
+        }       
+        .grid path {
+        	stroke-width: 0;
+		  	shape-rendering: crispEdges;
+        }
+		
+		.background {		
+		  fill: none;
+		  pointer-events: all;
+
+		}
+        path {
+		  fill: none;
+		  stroke: grey;
+		}
+
+	</style>
+</head>
+<style type="text/css">
+</style>
+<body>
+	<h1>Bon Camino</h1><p>
+	<div>A view of the steps leading to Santiago de Compostela starting from Hendaye at the French/spanish border. Mouse over the dots to obtain some information about the places crossed. the y axis indicates the altitude of the places crossed,while the x axis indicates the distance walked since Hendaye. The pink dots refer to the place mentioned in <a href="http://www.evene.fr/livres/livre/jean-christophe-rufin-immortelle-randonnee-1959215.php" target="_blank">Immortelle Randonnée</a> by Jean-Christophe Rufin.</div>
+	<script type="text/javascript">
+
+      var margin = {top: 50, right: 100, bottom: 50, left: 50},
+        width = 1400 - margin.left - margin.right,
+        height = 550- margin.top - margin.bottom;
+      
+
+	  var xValue = function(d) { return d.kmEffectue; }, 
+		xScale = d3.fisheye.scale(d3.scale.linear).range([0, width]), 
+		xMap = function(d) { return xScale(xValue(d)); }, 
+	    xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+
+
+	  var yValue = function(d) { return d.altitude; },
+	    yScale = d3.scale.linear().range([height, 0]), 		    
+	    yMap = function(d) { return yScale(yValue(d)); }, // data -> display
+	    yAxis = d3.svg.axis().scale(yScale).orient("left").tickSize(-width).ticks(5);
+
+
+	  //var fisheye = d3.fisheye();
+	  //var line = d3.svg.line();
+
+      var svg = d3.select("body").append("svg")
+        .attr("class","chart")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+	  // Add a x-axis label.
+	  svg.append("text")
+	      .attr("class", "x label")
+	      .attr("text-anchor", "end")
+	      .attr("x", width - 6)
+	      .attr("y", height + 30)
+	      .text("Distance traveled (km)");
+
+	  // Add a y-axis label.
+	  svg.append("text")
+	      .attr("class", "y label")
+	      .attr("text-anchor", "end")
+	      .attr("x", -6)
+	      .attr("y", -40)
+	      .attr("dy", ".75em")
+	      .attr("transform", "rotate(-90)")
+	      .text("Altitude (m)");
+	  d3.json("data/data.json", function(error,data){
+
+
+	  svg.append("rect")
+      	.attr("class", "background")
+      	.attr("width", width)
+      	.attr("height", height);
+
+
+		xScale.domain([0,d3.max(data.map(function(d) {return d.kmEffectue}))]);
+
+		//yScale.domain([0,d3.max(data.map(function(d) {return d.altitude}))]);
+		yScale.domain([0,1200]);
+		
+		svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis)
+		  .selectAll("text")
+		  .attr("y", 10)
+		  .attr("x", 9)
+		  .attr("dy", ".35em")
+		  //.attr("transform", "rotate(90)")
+		  .style("text-anchor", "start");
+
+	    svg.append("g")
+	      .attr("class", "y axis")
+	      .call(yAxis);
+
+
+	  var circle = svg.append("g")
+          .attr("class", "dots")
+      	  .selectAll(".dot")
+	      .data(data)
+	      .enter().append("circle")
+		  .attr('cx', xMap)
+		  .attr('cy', function(d) { return yScale(yValue(d)); })
+		  .attr('r',function(d){
+	      	if(d.villages=="Hendaye"||d.villages=="SAINT-JACQUES de COMPOSTELLE")
+	      		return 6;
+	      	else
+	      		return 4;
+	      })
+	      .style("fill",function(d){
+	      	if(d.villages=="Hendaye"||d.villages=="SAINT-JACQUES de COMPOSTELLE")
+	      		return "red";
+	      	if(d.pages!=null)
+	      		return "pink";
+	      	else
+	      		return "grey";
+	      })
+	      .style("opacity",1);
+
+    circle.append("title")
+        .text(function(d) { if(d.pages!=null) return "Page " + d.pages; });
+
+
+	  svg.selectAll("circle")
+		.on("mouseover", function(d) {
+	      d3.select(this)
+	        .transition()
+	        .attr("r",9);
+
+	      var selectedVillage=d.villages;
+	      var selectedRegion=d.régions;
+	      var selectedDenivele=d.denivele;
+	      var selectedSpirit=d.etatSpirituel;
+	      var selectedDistance=d.kmEffectue;
+	      var selectedLeft=d.kmRestant;
+
+	      document.getElementById("selectedVillage").innerHTML ="Place: "+ selectedVillage +" ("+ selectedRegion+")";
+	      document.getElementById("selectedDenivele").innerHTML ="Difference in altitude with previous place: "+ selectedDenivele + "m";
+	      document.getElementById("selectedSpirit").innerHTML ="Spiritual state: "+ selectedSpirit;
+	      document.getElementById("selectedDistance").innerHTML ="Distance traveled: "+ selectedDistance +" km";
+	      document.getElementById("selectedLeft").innerHTML ="Distance left: "+ selectedLeft +" km";
+
+
+
+	    })
+	    .on("mouseout", function(){ 
+	      document.getElementById("selectedVillage").innerHTML ="";
+	      document.getElementById("selectedDenivele").innerHTML ="";
+	      document.getElementById("selectedSpirit").innerHTML ="";
+	      document.getElementById("selectedDistance").innerHTML ="";
+	      document.getElementById("selectedLeft").innerHTML ="";
+
+	      d3.select(this)
+	        .transition()
+	        .attr("r",function(d){
+		      	if(d.villages=="Hendaye"||d.villages=="SAINT-JACQUES de COMPOSTELLE")
+		      		return 6;
+		      	else
+		      		return 4;
+		      });
+	    });
+
+	
+	  svg.on("mousemove", function() {
+	      var mouse = d3.mouse(this);
+	      xScale.distortion(2).focus(mouse[0]);
+	      //yScale.distortion(2.5).focus(mouse[1]);
+
+	      circle.call(position);
+	      svg.select(".x.axis").call(xAxis);
+	      //svg.select(".y.axis").call(yAxis);
+		  });
+	
+	  function position(dot) {
+	      dot .attr("cx", function(d) { return xScale(xValue(d)); })
+	        //  .attr("cy", function(d) { return yScale(yValue(d)); })
+	          .attr("r",  function(d){
+	      	if(d.villages=="Hendaye"||d.villages=="SAINT-JACQUES de COMPOSTELLE")
+	      		return 6;
+	      	else
+	      		return 4;
+	      });
+	  }
+
+	});
+
+	</script>
+	<script type="text/javascript">
+		var widthLegend = 1400,
+		    heightLegend = 30;
+
+		var svg2 = d3.select("body").append("svg")
+			.attr("width", widthLegend)
+		    .attr("height", heightLegend);
+
+
+
+			var dataLegend=[{color:"grey",legend: "Place crossed"},{color:"pink",legend: "Place mentioned in the book"},{color:"red",legend: "Starting and ending point"}];
+
+			var g=svg2.selectAll("circle")
+			    .data(dataLegend)
+			    .enter()
+			    .append("g");
+
+			var circle=g.append("circle")
+			    .attr("r",4)
+			    .attr("cx", function(d, i) {
+			            return (i * 325) + 75;
+			    })
+			    .attr("cy", heightLegend/2)
+			    .style("fill",  function(d,i) {
+			            return d.color;
+			    });
+
+			var text=g.append("text")
+			    .attr("dx", function(d, i) {
+			            return (i * 325) + 100;
+			    })
+			    .attr("dy", heightLegend/2)
+			    .attr("y", ".35em")
+			    .style("fill","rgb(120,120,120)")
+			    .text(function(d) { return d.legend; });
+</script>
+	<p>
+	<h2 id="selectedVillage"><b  id="selectedVillage"></b>
+	</h2>
+	<div id="selectedDistance"><b  id="selectedDistance"></b>
+	</div>
+	<div id="selectedLeft"><b  id="selectedLeft"></b>
+	</div>
+	<div id="selectedDenivele"><b  id="selectedDenivele"></b>
+	</div><p>
+	<div id="selectedSpirit"><b  id="selectedSpirit"></b>
+	</div>
+				
+</body>
